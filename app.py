@@ -17,7 +17,7 @@ from playwright.async_api import async_playwright
 
 app = FastAPI(title="Cookie Injector")
 
-BROWSERLESS_WS = "wss://vm-0-163-ubuntu.tailad2bea.ts.net:9222"
+BROWSERLESS_WS = "ws://browserless:3000"
 DATA_DIR = Path("/data")
 COOKIES_FILE = DATA_DIR / "cookies.json"
 GOTO_FILE = DATA_DIR / "goto_url.txt"

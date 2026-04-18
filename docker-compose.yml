@@ -7,4 +7,10 @@ services:
       - "127.0.0.1:8001:8080"
     volumes:
       - ./data:/data
-    # Only accessible locally — must use tailscale serve externally
+    networks:
+      - browserless_default
+    # Accessible via 127.0.0.1:8001 locally, then tailscale serve for external
+
+networks:
+  browserless_default:
+    external: true
