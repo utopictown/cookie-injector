@@ -182,10 +182,10 @@ async def index():
                     
                     if (res.ok) {
                         status.className = 'status success';
-                        status.innerHTML = \`✅ \${data.message}<br><br>
-                            <strong>Page title:</strong> \${data.title || 'N/A'}<br>
-                            <strong>URL:</strong> \${data.url || 'N/A'}<br><br>
-                            <em>🔴 Browser is OPEN — close it manually at browserless when done.</em>\`;
+                        status.innerHTML = '✅ ' + data.message + '<br><br>' +
+                            '<strong>Page title:</strong> ' + (data.title || 'N/A') + '<br>' +
+                            '<strong>URL:</strong> ' + (data.url || 'N/A') + '<br><br>' +
+                            '<em>🔴 Browser is OPEN — close it manually at browserless when done.</em>';
                     } else {
                         status.className = 'status error';
                         status.textContent = '❌ ' + data.detail;
@@ -196,7 +196,7 @@ async def index():
                 } finally {
                     loading = false;
                     btn.disabled = false;
-                    btn.textContent = '🚀 Inject & Verify Login';
+                    btn.textContent = '🚀 Inject Cookies & Open Site';
                 }
             }
         </script>
