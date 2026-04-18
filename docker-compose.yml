@@ -1,0 +1,10 @@
+services:
+  cookie-injector:
+    build: .
+    container_name: cookie-injector
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data:/data
+    # Only accessible locally — must use tailscale serve externally

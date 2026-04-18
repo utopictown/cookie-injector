@@ -1,0 +1,5 @@
+# Cookie Injector
+
+/data/
+__pycache__/
+*.pyc
