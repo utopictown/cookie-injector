@@ -37,10 +37,13 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
     SAMESITE_MAP = {
         "unspecified": "Lax",
         "no_restriction": "None",
+        "strict": "Strict",
+        "lax": "Lax",
+        "none": "None",
     }
     for c in cookies:
-        raw_samesite = c.get("sameSite", "lax")
-        c["sameSite"] = SAMESITE_MAP.get(raw_samesite, raw_samesite)
+        raw = c.get("sameSite", "")
+        c["sameSite"] = SAMESITE_MAP.get(raw, "Lax")
 
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(BROWSERLESS_WS)
