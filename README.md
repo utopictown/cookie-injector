@@ -13,12 +13,12 @@ cd ~/cookie-injector
 docker-compose up -d
 ```
 
-The app binds to `127.0.0.1:8080` only — it's not exposed to the internet.
+The app binds to `127.0.0.1:8001` only — it's not exposed to the internet.
 
 ### 2. Expose via Tailscale Serve
 
 ```bash
-tailscale serve http://127.0.0.1:8080
+tailscale serve http://127.0.0.1:8001
 ```
 
 Now it's accessible at `https://your-vps-name.tail-scale-name.ts.net/` via your tailnet.
@@ -28,7 +28,7 @@ Now it's accessible at `https://your-vps-name.tail-scale-name.ts.net/` via your 
 1. Install [EditThisCookie](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg) Chrome extension
 2. Go to the site you want (e.g., X.com, LinkedIn), log in manually
 3. Click the EditThisCookie icon → **Export** → copies JSON to clipboard
-4. Paste into Cookie Injector, click **Inject & Verify Login**
+4. Paste into Cookie Injector, enter the URL you want to visit, click **Inject Cookies & Open Site**
 
 ### 4. Done!
 
@@ -50,8 +50,7 @@ cookie-injector/
 
 ## Important notes
 
-- **X.com sessions are ephemeral** — may need to re-export cookies every few days
-- **LinkedIn sessions persist for weeks** — cookies work long-term
+- **Session duration varies by site** — some sites (LinkedIn) keep you logged in for weeks, others (X.com) may need re-exporting cookies more frequently
 - **browserless must be running** on the same VPS
 - **No nginx needed** — app connects directly to `wss://vm-0-163-ubuntu.tailad2bea.ts.net:9222`
 
@@ -62,6 +61,6 @@ cookie-injector/
 - Check Cookie Injector is running: `docker logs cookie-injector`
 
 **Login didn't work:**
-- Make sure you exported ALL cookies, not just auth_token
-- Some sites need additional cookies (x.com needs `auth_token` AND `ct0` AND `guest_id`)
-- Try logging out and back in, then re-export
+- Make sure you exported ALL cookies for the domain, not just a subset
+- Some sites need specific cookies (e.g., LinkedIn needs `li_at`, X.com needs `auth_token`, `ct0`, `guest_id`)
+- Try logging out and back in, then re-export all cookies

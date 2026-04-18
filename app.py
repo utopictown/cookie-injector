@@ -38,6 +38,11 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
         ctx = await browser.new_context()
         await ctx.add_cookies(cookies)
         page = await ctx.new_page()
+        # Resolve goto_url: use domain from first cookie as fallback
+        if not goto_url:
+            cookie_domains = [c.get("domain", "") for c in cookies if c.get("domain")]
+            domain = cookie_domains[0] if cookie_domains else "https://example.com"
+            goto_url = f"https://{domain.lstrip('.')}"
         await page.goto(goto_url, wait_until="networkidle", timeout=30000)
         title = await page.title()
         url = page.url
@@ -51,7 +56,7 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
 
 class InjectRequest(BaseModel):
     cookies: list
-    goto_url: str = "https://x.com/home"
+    goto_url: str = ""
 
 
 class InjectResponse(BaseModel):
@@ -123,23 +128,23 @@ async def index():
         <p class="subtitle">Inject cookies into browserless — no passwords shared</p>
         
         <label>Cookie JSON (from EditThisCookie):</label>
-        <textarea id="cookieInput" placeholder='[&#10;  {"name": "auth_token", "value": "xxx", "domain": ".x.com", "path": "/", "secure": true},&#10;  {"name": "ct0", "value": "yyy", ...},&#10;  ...&#10;]'></textarea>
-        <p class="hint">Export ALL cookies for the domain. Include auth_token, ct0, guest_id, etc.</p>
+        <textarea id="cookieInput" placeholder='[&#10;  {"name": "session_id", "value": "xxx", "domain": ".example.com", "path": "/", "secure": true},&#10;  {"name": "user_token", "value": "yyy", ...},&#10;  ...&#10;]'></textarea>
+        <p class="hint">Export ALL cookies for the domain (EditThisCookie → Export → copy JSON)</p>
         
-        <label>URL to verify (login check):</label>
-        <input type="text" id="gotoUrl" value="https://x.com/home">
+        <label>URL to open (leave empty for homepage):</label>
+        <input type="text" id="gotoUrl" placeholder="https://any-site.com/dashboard" value="">
         
-        <button id="injectBtn" onclick="doInject()">🚀 Inject & Verify Login</button>
+        <button id="injectBtn" onclick="doInject()">🚀 Inject Cookies & Open Site</button>
         
         <div id="status"></div>
         
         <div class="info-box">
             <strong>How it works:</strong><br>
-            1. Log into the site in YOUR browser, export cookies with EditThisCookie<br>
-            2. Paste the JSON, click Inject<br>
+            1. Log into any site in YOUR browser, export cookies with EditThisCookie<br>
+            2. Paste the JSON, enter the URL you want to visit<br>
             3. Cookie Injector opens browserless with your cookies<br>
             4. 🔴 Browserless stays OPEN — close it manually when done<br>
-            5. Reconnect anytime — same cookies work for days
+            5. Works for any site — LinkedIn, GitHub, Instagram, etc.
         </div>
         
         <script>
@@ -161,7 +166,7 @@ async def index():
                 try {
                     loading = true;
                     btn.disabled = true;
-                    btn.textContent = '⏳ Connecting...';
+                    btn.textContent = '⏳ Opening site...';
                     status.className = 'status';
                     status.textContent = '⏳ Connecting to browserless...';
                     
@@ -214,7 +219,7 @@ async def inject_cookies(req: InjectRequest):
     try:
         title, url = await inject_and_show(req.cookies, req.goto_url)
         return InjectResponse(
-            message="Cookies injected! Browser opened with your session.",
+            message="Cookies injected! Site opened with your session.",
             title=title,
             url=url
         )
