@@ -35,7 +35,7 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
     """
     # Normalize sameSite: Playwright only accepts Strict, Lax, or None
     SAMESITE_MAP = {
-        "unspecified": None,
+        "unspecified": "Lax",
         "no_restriction": "None",
     }
     for c in cookies:
