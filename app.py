@@ -11,7 +11,7 @@ from typing import Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from playwright.async_api import async_playwright
 
@@ -60,6 +60,9 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
         url = page.url
         # Detect login: redirected to /login → session invalid; stayed on target URL → session valid
         is_logged_in = "/login" not in url
+        # Take screenshot for visual confirmation
+        screenshot_path = DATA_DIR / "last_screenshot.png"
+        await page.screenshot(path=str(screenshot_path), full_page=True)
         # DON'T close — keep browser open for user
         return title, url, is_logged_in
 
@@ -204,6 +207,7 @@ async def index():
                             '<strong>Page title:</strong> ' + (data.title || 'N/A') + '<br>' +
                             '<strong>URL:</strong> ' + (data.url || 'N/A') + '<br>' +
                             loginStatus + '<br><br>' +
+                            '<a href="/screenshot" target="_blank" style="color:#00d4ff">📸 View screenshot</a><br><br>' +
                             '<em>🔴 Browser is OPEN — close it manually at browserless when done.</em>';
                     } else {
                         status.className = 'status error';
@@ -256,6 +260,14 @@ async def status():
             return {"status": "ok", "browser": data.get("Browser")}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+
+@app.get("/screenshot")
+async def screenshot():
+    screenshot_path = DATA_DIR / "last_screenshot.png"
+    if not screenshot_path.exists():
+        raise HTTPException(status_code=404, detail="No screenshot yet")
+    return FileResponse(screenshot_path, media_type="image/png")
 
 
 # ============================================================================
