@@ -55,7 +55,7 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
             cookie_domains = [c.get("domain", "") for c in cookies if c.get("domain")]
             domain = cookie_domains[0] if cookie_domains else "https://example.com"
             goto_url = f"https://{domain.lstrip('.')}"
-        await page.goto(goto_url, wait_until="networkidle", timeout=30000)
+        await page.goto(goto_url, wait_until="domcontentloaded", timeout=30000)
         title = await page.title()
         url = page.url
         # DON'T close — keep browser open for user
