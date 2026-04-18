@@ -33,6 +33,15 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
     Browser stays open after return.
     Returns (title, url).
     """
+    # Normalize sameSite: Playwright only accepts Strict, Lax, or None
+    SAMESITE_MAP = {
+        "unspecified": None,
+        "no_restriction": "None",
+    }
+    for c in cookies:
+        raw_samesite = c.get("sameSite", "lax")
+        c["sameSite"] = SAMESITE_MAP.get(raw_samesite, raw_samesite)
+
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(BROWSERLESS_WS)
         ctx = await browser.new_context()
