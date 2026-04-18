@@ -58,8 +58,10 @@ async def inject_and_show(cookies: list, goto_url: str) -> tuple[str, str]:
         await page.goto(goto_url, wait_until="domcontentloaded", timeout=30000)
         title = await page.title()
         url = page.url
+        # Detect login: redirected to /login → session invalid; stayed on target URL → session valid
+        is_logged_in = "/login" not in url
         # DON'T close — keep browser open for user
-        return title, url
+        return title, url, is_logged_in
 
 
 # ============================================================================
@@ -75,6 +77,7 @@ class InjectResponse(BaseModel):
     message: str
     title: Optional[str] = None
     url: Optional[str] = None
+    is_logged_in: bool = False
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -194,9 +197,13 @@ async def index():
                     
                     if (res.ok) {
                         status.className = 'status success';
+                        const loginStatus = data.is_logged_in
+                            ? '✅ <strong>Logged in!</strong>'
+                            : '⚠️ <strong>May not be logged in</strong> — redirected to login page?';
                         status.innerHTML = '✅ ' + data.message + '<br><br>' +
                             '<strong>Page title:</strong> ' + (data.title || 'N/A') + '<br>' +
-                            '<strong>URL:</strong> ' + (data.url || 'N/A') + '<br><br>' +
+                            '<strong>URL:</strong> ' + (data.url || 'N/A') + '<br>' +
+                            loginStatus + '<br><br>' +
                             '<em>🔴 Browser is OPEN — close it manually at browserless when done.</em>';
                     } else {
                         status.className = 'status error';
@@ -229,11 +236,12 @@ async def inject_cookies(req: InjectRequest):
         f.write(req.goto_url)
     
     try:
-        title, url = await inject_and_show(req.cookies, req.goto_url)
+        title, url, is_logged_in = await inject_and_show(req.cookies, req.goto_url)
         return InjectResponse(
             message="Cookies injected! Site opened with your session.",
             title=title,
-            url=url
+            url=url,
+            is_logged_in=is_logged_in
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
