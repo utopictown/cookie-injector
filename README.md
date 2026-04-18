@@ -1,8 +1,19 @@
 # Cookie Injector
 
-A tiny web app to inject browser cookies into browserless — log into any site without sharing passwords.
+A tiny web app to inject browser cookies into browserless — log into any site without sharing passwords. Sessions are persisted per-domain so you can manage multiple site sessions.
 
 **Flow:** You log in manually → export cookies → paste into app → browserless opens with your session.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Main UI |
+| POST | `/inject` | Inject cookies & open site |
+| GET | `/sessions` | List all saved sessions |
+| DELETE | `/sessions/{filename}` | Delete a session |
+| GET | `/screenshot` | View last screenshot |
+| GET | `/status` | Check browserless status |
 
 ## Setup
 

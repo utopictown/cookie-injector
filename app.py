@@ -19,8 +19,15 @@ app = FastAPI(title="Cookie Injector")
 
 BROWSERLESS_WS = "ws://browserless:3000"
 DATA_DIR = Path("/data")
+SESSIONS_DIR = DATA_DIR / "sessions"
 COOKIES_FILE = DATA_DIR / "cookies.json"
 GOTO_FILE = DATA_DIR / "goto_url.txt"
+
+
+def get_session_path(domain: str) -> Path:
+    """Get path for a session file, sanitizing domain name."""
+    safe = domain.lstrip(".").replace(".", "_")
+    return SESSIONS_DIR / f"{safe}.json"
 
 
 # ============================================================================
@@ -233,9 +240,17 @@ async def inject_cookies(req: InjectRequest):
     if not req.cookies:
         raise HTTPException(status_code=400, detail="No cookies provided")
     
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(COOKIES_FILE, "w") as f:
-        json.dump(req.cookies, f, indent=2)
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Save to domain-specific session file (for persistence)
+    for cookie in req.cookies:
+        domain = cookie.get("domain", "")
+        if domain:
+            session_path = get_session_path(domain)
+            session_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(session_path, "w") as f:
+                json.dump(req.cookies, f, indent=2)
+            break  # one file per domain is fine
     with open(GOTO_FILE, "w") as f:
         f.write(req.goto_url)
     
@@ -268,6 +283,47 @@ async def screenshot():
     if not screenshot_path.exists():
         raise HTTPException(status_code=404, detail="No screenshot yet")
     return FileResponse(screenshot_path, media_type="image/png")
+
+
+class SessionInfo(BaseModel):
+    domain: str
+    file: str
+    cookie_count: int
+    saved_at: Optional[str] = None
+
+
+@app.get("/sessions", response_model=list[SessionInfo])
+async def list_sessions():
+    """List all saved cookie sessions."""
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    sessions = []
+    for f in SESSIONS_DIR.glob("*.json"):
+        try:
+            with open(f) as fp:
+                cookies = json.load(fp)
+            domain = cookies[0].get("domain", "unknown") if cookies else "unknown"
+            sessions.append(SessionInfo(
+                domain=domain,
+                file=f.name,
+                cookie_count=len(cookies),
+                saved_at=str(f.stat().st_mtime)
+            ))
+        except Exception:
+            pass
+    return sorted(sessions, key=lambda s: s.domain)
+
+
+@app.delete("/sessions/{filename}")
+async def delete_session(filename: str):
+    """Delete a saved session file."""
+    # Prevent path traversal
+    if ".." in filename or "/" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    path = SESSIONS_DIR / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Session not found")
+    path.unlink()
+    return {"message": f"Deleted {filename}"}
 
 
 # ============================================================================
