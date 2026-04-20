@@ -564,7 +564,7 @@ WEB_UI_HTML = """
             status.textContent = '⏳ Saving session...';
 
             try {
-                const res = await fetch('http://localhost:9224/inject', {
+                const res = await fetch('/inject', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ cookies: parsed, goto_url: gotoUrl })
@@ -598,6 +598,21 @@ WEB_UI_HTML = """
 @app_web.get("/", response_class=HTMLResponse)
 async def web_index():
     return WEB_UI_HTML
+
+
+@app_web.post("/inject", response_model=InjectResponse)
+async def web_inject(req: InjectRequest):
+    """Proxy to CDP app's /inject endpoint to avoid CORS issues."""
+    import httpx
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            "http://localhost:9224/inject",
+            json={"cookies": req.cookies, "goto_url": req.goto_url}
+        )
+        data = resp.json()
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail=data.get("detail") or data.get("message"))
+        return InjectResponse(**data)
 
 
 @app_web.get("/sessions", response_model=list[SessionInfo])
