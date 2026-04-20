@@ -3,14 +3,8 @@ services:
     build: .
     container_name: cookie-injector
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:8001:8080"
+    network_mode: host
     volumes:
       - ./data:/data
-    networks:
-      - browserless_default
-    # Accessible via 127.0.0.1:8001 locally, then tailscale serve for external
-
-networks:
-  browserless_default:
-    external: true
+    extra_hosts:
+      - "browserless:172.20.0.2"

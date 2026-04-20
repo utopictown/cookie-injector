@@ -13,6 +13,6 @@ COPY app.py .
 
 # Data volume for saved cookies between sessions
 VOLUME [ "/data" ]
-EXPOSE 8080
+EXPOSE 9224 8001
 
 CMD ["python", "-u", "app.py"]
